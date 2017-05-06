@@ -9,7 +9,10 @@
   "author": "Uppinder Chugh <uppinderchugh@gmail.com>",
   "license": "MIT",
   "dependencies": {
+    "async": "^2.4.0",
+    "colors": "^1.1.2",
     "imap": "^0.8.19",
-    "mailparser": "^2.0.5"
+    "mailparser": "^2.0.5",
+    "node-datetime": "^1.0.0"
   }
 }

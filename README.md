@@ -22,6 +22,9 @@ A module for getting event based notifications containing new webmail for IITG w
     username : username, // Without @iitg.ernet.in
     password : password,
     mailServer: mailServer // Among 'teesta', 'disang', 'naambor', 'tamdil', 'dikrong'
+    path: '', // specify relative folder where to save attachments
+              // defaults to folder where this is called from
+    debug: true // for extra output, defaults to false 
   };
   
   // Create new Webmail object
@@ -54,10 +57,11 @@ A module for getting event based notifications containing new webmail for IITG w
     * **subject** - _string_ - The subject of the mail.
     * **text** - _string_ - Plain text body of the mail.
     * **textAsHtml** - _string_ - The plaintext body of the message formatted as HTML.
- 
+    * **attachments** - _array_ - Array of objects containing name and path of each attachment.
+    
 ## TODO
 
-- [ ] Attachments
+- [x] Attachments
 - [ ] Filtering 
 - [ ] Tests 
 

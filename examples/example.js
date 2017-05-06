@@ -3,7 +3,9 @@ var Webmail = require('../index')
 var user = {
   username: '', // with @iitg.ernet.in
   password: '',
-  mailServer: '' // Among 'disang', 'teesta', 'naambor', 'tambdil'
+  mailServer: '', // Among 'disang', 'teesta', 'naambor', 'tambdil',
+  path: '', // specify relative folder where to save attachments
+  debug: true // for extra output, defaults to false
 };
 
 webmail = new Webmail(user);

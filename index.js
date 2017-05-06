@@ -13,6 +13,11 @@
 const Imap = require('imap')
 const mailParser = require('mailparser').simpleParser
 const EventEmitter = require('events')
+const Async = require('async')
+const path = require('path')
+const fs = require('fs')
+const colors = require('colors')
+var datetime = require('node-datetime');
 
 /**
  * Class for webmail. Create webmail
@@ -32,7 +37,9 @@ class Webmail extends EventEmitter {
 
 		this._inbox = null
 		this._first = true
-		
+		this.debug = config.debug || false
+		this.attachPath = path.resolve(config.path || './')
+
 		this._user = {
 			user: config.username,
 			password: config.password,
@@ -55,7 +62,9 @@ class Webmail extends EventEmitter {
     	this.imap = new Imap(this._user)
 
 		this.imap.once('ready', () => {
-			console.log('ready')
+			if(this.debug) 
+				debug('User ' + this._user.user.blue + ' successfully logged in.')
+		
 			this.imap.openBox('INBOX', true, (err, box) => {
 				if(err) {
 					this.emitError(err)
@@ -70,7 +79,10 @@ class Webmail extends EventEmitter {
 				this._first = false
 				return
 			}
-
+			
+			if(this.debug) 
+				debug('New message received.')
+		
 			const f = this.imap.seq.fetch(this._inbox.messages.total + ':*', { bodies: '' })
 	        
 	        f.on('message', (msg) => {
@@ -80,7 +92,7 @@ class Webmail extends EventEmitter {
 		        	this.emitError(err)
 	                return
 	              }
-	              this.emitMessage(mail)
+	              this.processMail(mail)
 	            })
 	          })
 	        })
@@ -101,6 +113,65 @@ class Webmail extends EventEmitter {
 	}
 
 	/**
+	 * Helper member for processing received
+	 * message. Used mainly for saving the
+	 * attachments and extracting useful entities.
+	 *
+	 * @param      {object}  mail    The mail object
+	 */
+	processMail(mail) {
+		// Process attachments
+		const webmail = {
+			from: {
+				email: mail.from.value[0].address,
+				name: mail.from.value[0].name
+			},
+			to: mail.to.value,
+			date: mail.date,
+			subject: mail.subject,
+			text: mail.text,
+			textAsHtml: mail.textAsHtml,
+			attachments: []
+		}
+
+		if(mail.attachments.length > 0) {
+			if(this.debug)
+				debug('Attachments include:')
+			
+			webmail.attachments = mail.attachments.map((file) => {
+				return {
+					name: file.filename,
+					path: path.join(this.attachPath, file.filename)
+				}
+			})
+			
+			this.emitMessage(webmail)	
+
+			Async.map(mail.attachments, (file, callback) => {
+				const filepath = path.join(this.attachPath, file.filename)
+				const wstream = fs.createWriteStream(filepath)
+			
+				wstream.write(file.content)
+				wstream.end(() => {
+					if(this.debug)
+						debug(filepath.blue)
+
+					callback()
+				})
+
+			}, (err) => {
+				if(err) {
+					this.emitError(err)
+					return
+				}
+			})
+
+		} else {
+			this.emitMessage(webmail)	
+		}
+	}
+
+	/**
 	 * Helper member for emitting error
 	 * to client.
 	 *
@@ -111,28 +182,25 @@ class Webmail extends EventEmitter {
 	}
 
 	/**
-	 * Helper member that extracts useful entities
-	 * from received mail object form web server, and
-	 * emits it to the client.		
+	 * Helper member for emitting the mial
+	 * to the client.	
 	 *
 	 * @param      {object}  mail    The mail
 	 */
 	emitMessage(mail) {
-		const webmail = {
-			from: {
-				email: mail.from.value[0].address,
-				name: mail.from.value[0].name
-			},
-			to: mail.to.value,
-			date: mail.date,
-			subject: mail.subject,
-			text: mail.text,
-			textAsHtml: mail.textAsHtml
-		}
-
-		this.emit('mail', webmail)
+		this.emit('mail', mail)
 	}
 } 
+
+/**
+ * Helper function for debugging
+ *
+ * @param      {string}  text    The text
+ */
+function debug(text) {
+	const currTime = datetime.create().format('H:M:S')
+	console.log(currTime.green + ' ' + text)
+}
 
 /**
  * Module exports.
