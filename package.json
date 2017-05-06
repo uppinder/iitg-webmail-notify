@@ -1,6 +1,6 @@
 {
   "name": "iitg-webmail-notify",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A module that notifies upon receiving a new message for IITG Webmail servers.",
   "main": "index.js",
   "scripts": {
