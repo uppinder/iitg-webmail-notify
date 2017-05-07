@@ -17,7 +17,7 @@ const Async = require('async')
 const path = require('path')
 const fs = require('fs')
 const colors = require('colors')
-var datetime = require('node-datetime');
+const datetime = require('node-datetime');
 
 /**
  * Class for webmail. Create webmail
