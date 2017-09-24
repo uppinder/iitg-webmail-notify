@@ -43,7 +43,7 @@ class Webmail extends EventEmitter {
 		this._user = {
 			user: config.username,
 			password: config.password,
-			host: config.mailServer.toLowerCase() + '.iitg.ernet.in',
+			host: getServerIp(config.mailServer),
 			port: 993,
 			tls: true
 		}
@@ -64,7 +64,9 @@ class Webmail extends EventEmitter {
 		this.imap.once('ready', () => {
 			if(this.debug) 
 				debug('User ' + this._user.user.blue + ' successfully logged in.')
-		
+			
+			this.emitLoginStatus(true)
+
 			this.imap.openBox('INBOX', true, (err, box) => {
 				if(err) {
 					this.emitError(err)
@@ -81,7 +83,7 @@ class Webmail extends EventEmitter {
 			}
 			
 			if(this.debug) 
-				debug('New message received.')
+				debug('New mail for: ' + this._user.user.blue)
 		
 			const f = this.imap.seq.fetch(this._inbox.messages.total + ':*', { bodies: '' })
 	        
@@ -104,7 +106,7 @@ class Webmail extends EventEmitter {
 
 		this.imap.once('error', (err) => {
 			if(err) {
-				this.emitError(err)
+				this.emitLoginStatus(false)
 				return
 			}
 		})
@@ -182,13 +184,17 @@ class Webmail extends EventEmitter {
 	}
 
 	/**
-	 * Helper member for emitting the mial
+	 * Helper member for emitting the mail
 	 * to the client.	
 	 *
 	 * @param      {object}  mail    The mail
 	 */
 	emitMessage(mail) {
 		this.emit('mail', mail)
+	}
+
+	emitLoginStatus(status) {
+		this.emit('login', {'success': status})
 	}
 } 
 
@@ -200,6 +206,24 @@ class Webmail extends EventEmitter {
 function debug(text) {
 	const currTime = datetime.create().format('H:M:S')
 	console.log(currTime.green + ' ' + text)
+}
+
+/**
+ * Helper function for obtaining server
+ * ip of webserver
+ *
+ * @param      {string}  server    The WebServer
+ */
+function getServerIp(server) {
+	const serverList = {
+		'teesta': '202.141.80.12',
+		'naambor': '202.141.80.9',
+		'disang': '202.141.80.10',
+		'tamdil': '202.141.80.11',
+		'dikrong': '202.141.80.13'
+	}
+
+	return serverList[server]
 }
 
 /**
